@@ -11,11 +11,23 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Akun Super Admin
         User::updateOrCreate(
             ['email' => 'admin@inventaris.com'],
             [
-                'name'     => 'Super Admin',
+                'name'     => 'Super Administrator',
+                'role'     => 'super-admin',
                 'password' => Hash::make('Admin123!'),
+            ]
+        );
+
+        // Akun Staf Gudang
+        User::updateOrCreate(
+            ['email' => 'staff@inventaris.com'],
+            [
+                'name'     => 'Staf Gudang',
+                'role'     => 'staff',
+                'password' => Hash::make('Staff123!'),
             ]
         );
 
