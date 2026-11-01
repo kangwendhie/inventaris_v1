@@ -11,25 +11,35 @@ class ProductController extends Controller
     private function getFilteredQuery(Request $request)
     {
         $search = $request->query('search');
+        $category = $request->query('category');
+
         return Product::when($search, function ($query, $search) {
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('sku', 'like', "%{$search}%")
                   ->orWhere('category', 'like', "%{$search}%");
+            });
+        })->when($category, function ($query, $category) {
+            $query->where('category', $category);
         })->latest();
     }
 
     public function index(Request $request)
     {
         $search = $request->query('search');
+        $category = $request->query('category');
         $products = $this->getFilteredQuery($request)->paginate(10)->withQueryString();
+
+        $categories = Product::select('category')->distinct()->orderBy('category')->pluck('category');
 
         $stats = [
             'total_items' => Product::count(),
             'total_stock' => Product::sum('stock'),
+            'low_stock'   => Product::where('stock', '<=', 10)->count(),
             'total_value' => Product::selectRaw('SUM(stock * price) as val')->value('val') ?? 0,
         ];
 
-        return view('products.index', compact('products', 'stats', 'search'));
+        return view('products.index', compact('products', 'stats', 'search', 'category', 'categories'));
     }
 
     public function store(Request $request)
