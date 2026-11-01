@@ -12,5 +12,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/export/excel', [ProductController::class, 'exportExcel'])->name('products.export.excel');
     Route::get('/products/export/pdf', [ProductController::class, 'exportPdf'])->name('products.export.pdf');
-    Route::resource('products', ProductController::class)->except(['index', 'create', 'show', 'edit']);
+    
+    // Akses untuk semua user login (Admin & Staff)
+    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+
+    // Khusus Super Admin
+    Route::middleware('role:super-admin')->group(function () {
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+    });
 });
