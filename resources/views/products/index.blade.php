@@ -14,7 +14,6 @@
                 InventarisApp <span class="text-xs bg-emerald-500 text-white px-2.5 py-1 rounded-full ml-2">v1.2 Foto Produk</span>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-sm text-indigo-100 hidden sm:inline">Halo, <strong>{{ auth()->user()->name }}</strong></span>
                 <span class="text-xs bg-indigo-800 px-2 py-0.5 rounded ml-1">{{ auth()->user()->role === 'super-admin' ? 'Super Admin' : 'Staf Gudang' }}</span>
                 <button onclick="openCreateModal()" class="bg-white text-indigo-600 hover:bg-indigo-50 font-semibold px-4 py-2 rounded-lg text-sm shadow transition">
                     + Tambah Produk
