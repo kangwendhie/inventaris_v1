@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Inventaris - Laravel Starter Kit</title>
+    <title>Manajemen Inventaris v1.1 - Laravel Starter Kit</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
@@ -11,7 +11,7 @@
     <nav class="bg-indigo-600 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
             <div class="font-bold text-xl tracking-tight">
-                InventarisApp <span class="text-xs bg-indigo-800 px-2 py-1 rounded ml-2">Admin Panel</span>
+                InventarisApp <span class="text-xs bg-emerald-500 text-white px-2.5 py-1 rounded-full ml-2">v1.1 Live GitHub</span>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-indigo-100 hidden sm:inline">Halo, <strong>{{ auth()->user()->name }}</strong></span>
@@ -29,7 +29,8 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- 4 Kartu Statistik (Versi 1.1) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <p class="text-sm text-slate-500">Total Jenis Produk</p>
                 <p class="text-2xl font-bold text-slate-800 mt-1">{{ number_format($stats['total_items'], 0, ',', '.') }} Item</p>
@@ -37,6 +38,11 @@
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <p class="text-sm text-slate-500">Total Stok Tersedia</p>
                 <p class="text-2xl font-bold text-indigo-600 mt-1">{{ number_format($stats['total_stock'], 0, ',', '.') }} Unit</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-amber-200 bg-amber-50/30">
+                <p class="text-sm text-amber-700 font-medium">Peringatan Stok Menipis</p>
+                <p class="text-2xl font-bold text-amber-600 mt-1">{{ number_format($stats['low_stock'], 0, ',', '.') }} Produk</p>
+                <p class="text-xs text-slate-400 mt-1">Stok 10 unit atau kurang</p>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <p class="text-sm text-slate-500">Estimasi Nilai Inventaris</p>
@@ -61,19 +67,31 @@
         @endif
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <form method="GET" action="{{ route('products.index') }}" class="flex w-full sm:w-96 gap-2">
-                    <input type="text" name="search" value="{{ $search }}" placeholder="Cari SKU, nama, atau kategori..." 
-                           class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700">Cari</button>
+            <div class="p-4 border-b border-slate-200 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <!-- Filter Pencarian & Kategori -->
+                <form method="GET" action="{{ route('products.index') }}" class="flex flex-wrap sm:flex-nowrap w-full lg:w-auto gap-2">
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Cari SKU atau nama..." 
+                           class="w-full sm:w-64 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    
+                    <select name="category" onchange="this.form.submit()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Semua Kategori</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat }}" {{ $category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
+                    </select>
+
+                    <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-slate-700">Filter</button>
+                    @if($search || $category)
+                        <a href="{{ route('products.index') }}" class="bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm hover:bg-slate-300">Reset</a>
+                    @endif
                 </form>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <a href="{{ route('products.export.excel', ['search' => $search]) }}" 
+                <div class="flex items-center gap-2 w-full lg:w-auto justify-end">
+                    <a href="{{ route('products.export.excel', ['search' => $search, 'category' => $category]) }}" 
                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                         Export Excel (.xls)
                     </a>
-                    <a href="{{ route('products.export.pdf', ['search' => $search]) }}" 
+                    <a href="{{ route('products.export.pdf', ['search' => $search, 'category' => $category]) }}" 
                        class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                         Export PDF (.pdf)
                     </a>
@@ -87,7 +105,7 @@
                             <th class="p-4">SKU</th>
                             <th class="p-4">Nama Produk</th>
                             <th class="p-4">Kategori</th>
-                            <th class="p-4 text-right">Stok</th>
+                            <th class="p-4 text-right">Stok & Status</th>
                             <th class="p-4 text-right">Harga Satuan</th>
                             <th class="p-4 text-center">Aksi</th>
                         </tr>
@@ -101,7 +119,16 @@
                                 <div class="text-xs text-slate-500">{{ $product->description }}</div>
                             </td>
                             <td class="p-4"><span class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs">{{ $product->category }}</span></td>
-                            <td class="p-4 text-right font-semibold">{{ $product->stock }}</td>
+                            <td class="p-4 text-right">
+                                <span class="font-semibold mr-1.5">{{ $product->stock }}</span>
+                                @if($product->stock == 0)
+                                    <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">Habis</span>
+                                @elseif($product->stock <= 10)
+                                    <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-semibold">Menipis</span>
+                                @else
+                                    <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-semibold">Aman</span>
+                                @endif
+                            </td>
                             <td class="p-4 text-right">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                             <td class="p-4 text-center space-x-2">
                                 <button onclick='openEditModal(@json($product))' class="text-amber-600 hover:underline font-medium">Edit</button>
