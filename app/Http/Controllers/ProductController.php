@@ -60,7 +60,7 @@ class ProductController extends Controller
         }
 
         Product::create($validated);
-        return redirect()->route('products.index')->with('success', 'Produk beserta foto berhasil ditambahkan.');
+        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
     public function update(Request $request, Product $product)
@@ -88,6 +88,11 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        // Proteksi tambahan di controller
+        if (auth()->user()->role !== 'super-admin') {
+            abort(403, 'Hanya Super Admin yang diizinkan menghapus produk.');
+        }
+
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
@@ -107,43 +112,23 @@ class ProductController extends Controller
             echo '<body>';
             echo '<table border="1">';
             echo '<tr style="background-color:#4f46e5; color:#ffffff; font-weight:bold;">
-                    <th>No</th>
-                    <th>SKU</th>
-                    <th>Nama Produk</th>
-                    <th>Kategori</th>
-                    <th>Stok</th>
-                    <th>Harga Satuan (Rp)</th>
-                    <th>Total Nilai (Rp)</th>
-                    <th>Deskripsi</th>
+                    <th>No</th><th>SKU</th><th>Nama Produk</th><th>Kategori</th><th>Stok</th><th>Harga Satuan (Rp)</th><th>Total Nilai (Rp)</th><th>Deskripsi</th>
                   </tr>';
-
             foreach ($products as $index => $p) {
                 $subtotal = $p->stock * $p->price;
                 echo '<tr>
-                        <td>' . ($index + 1) . '</td>
-                        <td>' . e($p->sku) . '</td>
-                        <td>' . e($p->name) . '</td>
-                        <td>' . e($p->category) . '</td>
-                        <td>' . $p->stock . '</td>
-                        <td>' . $p->price . '</td>
-                        <td>' . $subtotal . '</td>
-                        <td>' . e($p->description) . '</td>
+                        <td>' . ($index + 1) . '</td><td>' . e($p->sku) . '</td><td>' . e($p->name) . '</td><td>' . e($p->category) . '</td><td>' . $p->stock . '</td><td>' . $p->price . '</td><td>' . $subtotal . '</td><td>' . e($p->description) . '</td>
                       </tr>';
             }
             echo '</table></body></html>';
-        }, $filename, [
-            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
-        ]);
+        }, $filename, ['Content-Type' => 'application/vnd.ms-excel; charset=UTF-8']);
     }
 
     public function exportPdf(Request $request)
     {
         $products = $this->getFilteredQuery($request)->get();
         $totalValue = $products->sum(fn($item) => $item->stock * $item->price);
-
-        $pdf = Pdf::loadView('products.pdf', compact('products', 'totalValue'))
-                  ->setPaper('a4', 'landscape');
-
+        $pdf = Pdf::loadView('products.pdf', compact('products', 'totalValue'))->setPaper('a4', 'landscape');
         return $pdf->download('laporan-inventaris-' . now()->format('Y-m-d-His') . '.pdf');
     }
 }
