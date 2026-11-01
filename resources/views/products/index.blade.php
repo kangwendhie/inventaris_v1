@@ -140,11 +140,13 @@
                             <td class="p-4 text-right">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                             <td class="p-4 text-center space-x-2">
                                 <button onclick='openEditModal(@json($product))' class="text-amber-600 hover:underline font-medium">Edit</button>
+                                @if(auth()->user()->role === 'super-admin')
                                 <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline" onsubmit="return confirm('Hapus produk ini?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:underline font-medium">Hapus</button>
                                 </form>
+                                @endif
                             </td>
                         </tr>
                         @empty
