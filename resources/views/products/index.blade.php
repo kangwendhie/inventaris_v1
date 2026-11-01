@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Inventaris v1.1 - Laravel Starter Kit</title>
+    <title>Manajemen Inventaris v1.2 - Laravel Starter Kit</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
@@ -11,7 +11,7 @@
     <nav class="bg-indigo-600 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
             <div class="font-bold text-xl tracking-tight">
-                InventarisApp <span class="text-xs bg-emerald-500 text-white px-2.5 py-1 rounded-full ml-2">v1.1 Live GitHub</span>
+                InventarisApp <span class="text-xs bg-emerald-500 text-white px-2.5 py-1 rounded-full ml-2">v1.2 Foto Produk</span>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-indigo-100 hidden sm:inline">Halo, <strong>{{ auth()->user()->name }}</strong></span>
@@ -29,7 +29,6 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- 4 Kartu Statistik (Versi 1.1) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <p class="text-sm text-slate-500">Total Jenis Produk</p>
@@ -68,7 +67,6 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-4 border-b border-slate-200 flex flex-col lg:flex-row justify-between items-center gap-4">
-                <!-- Filter Pencarian & Kategori -->
                 <form method="GET" action="{{ route('products.index') }}" class="flex flex-wrap sm:flex-nowrap w-full lg:w-auto gap-2">
                     <input type="text" name="search" value="{{ $search }}" placeholder="Cari SKU atau nama..." 
                            class="w-full sm:w-64 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -102,6 +100,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
+                            <th class="p-4">Foto</th>
                             <th class="p-4">SKU</th>
                             <th class="p-4">Nama Produk</th>
                             <th class="p-4">Kategori</th>
@@ -113,6 +112,15 @@
                     <tbody class="divide-y divide-slate-200 text-sm">
                         @forelse($products as $product)
                         <tr class="hover:bg-slate-50">
+                            <td class="p-4">
+                                @if($product->image)
+                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-12 h-12 object-cover rounded-lg border border-slate-200">
+                                @else
+                                    <div class="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-400">
+                                        No Img
+                                    </div>
+                                @endif
+                            </td>
                             <td class="p-4 font-mono text-xs font-semibold text-indigo-600">{{ $product->sku }}</td>
                             <td class="p-4">
                                 <div class="font-medium text-slate-900">{{ $product->name }}</div>
@@ -141,7 +149,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="p-8 text-center text-slate-500">Belum ada data produk ditemukan.</td>
+                            <td colspan="7" class="p-8 text-center text-slate-500">Belum ada data produk ditemukan.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -154,10 +162,11 @@
         </div>
     </main>
 
+    <!-- Modal Form dengan enctype multipart/form-data -->
     <div id="productModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
             <h2 id="modalTitle" class="text-lg font-bold mb-4">Tambah Produk Baru</h2>
-            <form id="productForm" method="POST" action="{{ route('products.store') }}">
+            <form id="productForm" method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" id="formMethod" value="POST">
                 
@@ -188,6 +197,13 @@
                     </div>
                 </div>
 
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Foto Produk (Maks 2MB)</label>
+                    <input type="file" name="image" id="image" accept="image/jpeg,image/png,image/webp" 
+                           class="w-full border rounded-lg px-3 py-1.5 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                    <p id="imageHint" class="text-xs text-slate-400 mt-1 hidden">Biarkan kosong jika tidak ingin mengganti foto saat ini.</p>
+                </div>
+
                 <div class="mb-6">
                     <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Deskripsi</label>
                     <textarea name="description" id="description" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea>
@@ -206,12 +222,14 @@
         const form = document.getElementById('productForm');
         const methodInput = document.getElementById('formMethod');
         const title = document.getElementById('modalTitle');
+        const imageHint = document.getElementById('imageHint');
 
         function openCreateModal() {
             title.innerText = 'Tambah Produk Baru';
             form.action = "{{ route('products.store') }}";
             methodInput.value = 'POST';
             form.reset();
+            imageHint.classList.add('hidden');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
@@ -226,6 +244,8 @@
             document.getElementById('stock').value = product.stock;
             document.getElementById('price').value = parseFloat(product.price);
             document.getElementById('description').value = product.description || '';
+            document.getElementById('image').value = '';
+            imageHint.classList.remove('hidden');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
