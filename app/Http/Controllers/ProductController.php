@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -46,6 +47,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'sku'         => 'required|string|max:50|unique:products,sku',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'name'        => 'required|string|max:255',
             'category'    => 'required|string|max:100',
             'stock'       => 'required|integer|min:0',
@@ -53,20 +55,32 @@ class ProductController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
+
         Product::create($validated);
-        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan.');
+        return redirect()->route('products.index')->with('success', 'Produk beserta foto berhasil ditambahkan.');
     }
 
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
             'sku'         => 'required|string|max:50|unique:products,sku,' . $product->id,
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'name'        => 'required|string|max:255',
             'category'    => 'required|string|max:100',
             'stock'       => 'required|integer|min:0',
             'price'       => 'required|numeric|min:0',
             'description' => 'nullable|string',
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
 
         $product->update($validated);
         return redirect()->route('products.index')->with('success', 'Data produk berhasil diperbarui.');
@@ -74,8 +88,12 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        if ($product->image && Storage::disk('public')->exists($product->image)) {
+            Storage::disk('public')->delete($product->image);
+        }
+
         $product->delete();
-        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus.');
+        return redirect()->route('products.index')->with('success', 'Produk dan file foto berhasil dihapus.');
     }
 
     public function exportExcel(Request $request)
